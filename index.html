@@ -10,8 +10,25 @@
     <div class="container mt-5">
         <h1>Loop a YouTube Video Between Timestamps</h1>
 
+        <!-- Form to take user input for YouTube URL, start time, and end time -->
+        <form id="videoForm">
+            <div class="form-group">
+                <label for="videoUrl">YouTube Video URL</label>
+                <input type="text" class="form-control" id="videoUrl" placeholder="Enter YouTube Video URL" required>
+            </div>
+            <div class="form-group">
+                <label for="startTime">Start Time (in seconds)</label>
+                <input type="number" class="form-control" id="startTime" placeholder="Enter start time" required>
+            </div>
+            <div class="form-group">
+                <label for="endTime">End Time (in seconds)</label>
+                <input type="number" class="form-control" id="endTime" placeholder="Enter end time" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Load Video</button>
+        </form>
+
         <!-- The YouTube video will be loaded into this div -->
-        <div class="embed-responsive embed-responsive-16by9">
+        <div class="embed-responsive embed-responsive-16by9 mt-4">
             <div id="player" class="embed-responsive-item"></div>
         </div>
     </div>
@@ -20,39 +37,69 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
-        // Variables to define start and end times (in seconds)
-        const startTime = 10;  // Start at 10 seconds
-        const endTime = 20;    // End at 20 seconds
-
-        // Create the YouTube player when API is ready
         let player;
-        function onYouTubeIframeAPIReady() {
+
+        // Function to extract the video ID from a full YouTube URL
+        function getYouTubeVideoId(url) {
+            const videoIdMatch = url.match(/[?&]v=([^&#]*)/);
+            return videoIdMatch ? videoIdMatch[1] : null;
+        }
+
+        // Function to create the YouTube player when API is ready
+        function createPlayer(videoId, startTime, endTime) {
             player = new YT.Player('player', {
                 height: '390',
                 width: '640',
-                videoId: 'YOUR_VIDEO_ID', // Replace with your YouTube video ID
+                videoId: videoId,
                 events: {
-                    'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange
+                    'onReady': function (event) {
+                        event.target.seekTo(startTime);
+                        event.target.playVideo();
+                    },
+                    'onStateChange': function (event) {
+                        if (event.data === YT.PlayerState.PLAYING) {
+                            const interval = setInterval(function () {
+                                const currentTime = player.getCurrentTime();
+                                if (currentTime >= endTime) {
+                                    player.seekTo(startTime);
+                                }
+                            }, 100);
+                        }
+                    }
                 }
             });
         }
 
-        // Start playing the video when player is ready
-        function onPlayerReady(event) {
-            event.target.playVideo();
-        }
+        // Handle form submission to load the video and start looping
+        document.getElementById('videoForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent the form from submitting
 
-        // Loop the video between startTime and endTime
-        function onPlayerStateChange(event) {
-            if (event.data == YT.PlayerState.PLAYING) {
-                const checkInterval = setInterval(() => {
-                    const currentTime = player.getCurrentTime();
-                    if (currentTime >= endTime) {
-                        player.seekTo(startTime); // Go back to the start time
-                    }
-                }, 100); // Check every 100 milliseconds
+            // Get form values
+            const videoUrl = document.getElementById('videoUrl').value;
+            const startTime = parseInt(document.getElementById('startTime').value, 10);
+            const endTime = parseInt(document.getElementById('endTime').value, 10);
+
+            // Extract the video ID from the YouTube URL
+            const videoId = getYouTubeVideoId(videoUrl);
+
+            if (videoId) {
+                // Create or load the YouTube player with the provided data
+                if (player) {
+                    player.loadVideoById({
+                        videoId: videoId,
+                        startSeconds: startTime
+                    });
+                } else {
+                    createPlayer(videoId, startTime, endTime);
+                }
+            } else {
+                alert('Invalid YouTube URL. Please enter a valid URL.');
             }
+        });
+
+        // This function is called when the YouTube IFrame API is ready
+        function onYouTubeIframeAPIReady() {
+            // Initially empty, the player will be created after form submission
         }
     </script>
 </body>

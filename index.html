@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loop YouTube Video Between Timestamps</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Loop a YouTube Video Between Timestamps</h1>
+
+        <!-- The YouTube video will be loaded into this div -->
+        <div class="embed-responsive embed-responsive-16by9">
+            <div id="player" class="embed-responsive-item"></div>
+        </div>
+    </div>
+
+    <!-- Load YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <script>
+        // Variables to define start and end times (in seconds)
+        const startTime = 10;  // Start at 10 seconds
+        const endTime = 20;    // End at 20 seconds
+
+        // Create the YouTube player when API is ready
+        let player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '390',
+                width: '640',
+                videoId: 'YOUR_VIDEO_ID', // Replace with your YouTube video ID
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        // Start playing the video when player is ready
+        function onPlayerReady(event) {
+            event.target.playVideo();
+        }
+
+        // Loop the video between startTime and endTime
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                const checkInterval = setInterval(() => {
+                    const currentTime = player.getCurrentTime();
+                    if (currentTime >= endTime) {
+                        player.seekTo(startTime); // Go back to the start time
+                    }
+                }, 100); // Check every 100 milliseconds
+            }
+        }
+    </script>
+</body>
+</html>

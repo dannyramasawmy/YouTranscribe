@@ -42,7 +42,7 @@
         // Function to extract the video ID from a full YouTube URL
         function getYouTubeVideoId(url) {
             const videoIdMatch = url.match(/[?&]v=([^&#]*)/);
-            return videoIdMatch ? videoIdMatch[1] : null;
+            return videoIdMatch ? url : null;
         }
 
         // Function to create the YouTube player when API is ready
